@@ -20,7 +20,7 @@ def train(
     checkpoint_dir="../outputs/checkpoints",
 ):
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(f"Training on {device}")
+    print(f"Training on {device}, schedule={schedule_type}")
 
     schedule = NoiseSchedule(timesteps=timesteps, schedule_type=schedule_type).to(device)
     model = UNet(in_channels=1, base_channels=32).to(device)
@@ -50,10 +50,16 @@ def train(
         avg_loss = epoch_loss / len(loader)
         print(f"epoch {epoch} avg loss {avg_loss:.4f}")
 
-        save_checkpoint(model, optimizer, epoch, f"{checkpoint_dir}/model_epoch{epoch}.pt")
+        save_checkpoint(model, optimizer, epoch, f"{checkpoint_dir}/{schedule_type}_epoch{epoch}.pt")
 
     return model, schedule
 
 
 if __name__ == "__main__":
-    train(epochs=1)
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--schedule", type=str, default="cosine", choices=["linear", "cosine"])
+    parser.add_argument("--epochs", type=int, default=20)
+    args = parser.parse_args()
+
+    train(epochs=args.epochs, schedule_type=args.schedule)
